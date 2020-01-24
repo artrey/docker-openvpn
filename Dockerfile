@@ -1,8 +1,8 @@
-FROM alpine:3.10.2
+FROM alpine:3.11.3
 
-LABEL maintainer="Alexander Litvinenko <array.shift@yahoo.com>"
+LABEL maintainer="Alexander Ivanov <oz.sasha.ivanov@gmail.com>"
 
-ENV APP_NAME Dockovpn
+ENV APP_NAME dockovpn
 ENV APP_INSTALL_PATH /opt/${APP_NAME}
 ENV APP_VERSION dev
 
@@ -18,11 +18,9 @@ RUN apk add --no-cache openvpn easy-rsa bash netcat-openbsd zip dumb-init && \
     # Copy DH file
     cp pki/dh.pem /etc/openvpn && \
     # Copy FROM ./scripts/server/conf TO /etc/openvpn/server.conf in DockerFile
-    cp config/server.conf /etc/openvpn/server.conf
-
+    cp config/server.conf /etc/openvpn/server.conf && \
+    mkdir -p /etc/openvpn/ccd
 
 EXPOSE 1194/udp
-EXPOSE 8080/tcp
 
 ENTRYPOINT [ "dumb-init", "./start.sh" ]
-CMD [ "c" ]

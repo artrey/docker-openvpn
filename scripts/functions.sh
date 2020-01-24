@@ -7,51 +7,60 @@ function datef() {
 }
 
 function createConfig() {
+    cd $APP_INSTALL_PATH
+
+    CLIENT_FILENAME="${CLIENT_FILENAME:-client}"
+
     # Redirect stderr to the black hole
-    /usr/share/easy-rsa/easyrsa build-client-full client nopass &> /dev/null
+    /usr/share/easy-rsa/easyrsa build-client-full "$CLIENT_FILENAME" nopass &> /dev/null
     # Writing new private key to '/usr/share/easy-rsa/pki/private/client.key
     # Client sertificate /usr/share/easy-rsa/pki/issued/client.crt
     # CA is by the path /usr/share/easy-rsa/pki/ca.crt
 
+    INTERMEDIATE_DIR="clients/inter/$CLIENT_FILENAME"
     # Create mkdir if doesn't exist
-    mkdir -p client
+    mkdir -p "$INTERMEDIATE_DIR"
 
-    cp pki/private/client.key pki/issued/client.crt pki/ca.crt /etc/openvpn/ta.key client
+    cp "pki/private/$CLIENT_FILENAME.key" "pki/issued/$CLIENT_FILENAME.crt" pki/ca.crt /etc/openvpn/ta.key "$INTERMEDIATE_DIR"
 
     # Set default value to HOST_ADDR if it was not set from environment
-    if [ -z "$HOST_ADDR" ]
-    then
-        HOST_ADDR='localhost'
-    fi
+    HOST_ADDR="${HOST_ADDR:-localhost}"
 
-    cd $APP_INSTALL_PATH
-    cp config/client.ovpn client
+    # Set default value to HOST_PORT if it was not set from environment
+    HOST_PORT="${HOST_PORT:-1194}"
 
-    echo -e "\nremote $HOST_ADDR 1194" >> client/client.ovpn
+    cp config/client.ovpn "$INTERMEDIATE_DIR"
+
+    echo -e "\nremote $HOST_ADDR $HOST_PORT" >> "$INTERMEDIATE_DIR/client.ovpn"
 
     # Embed client authentication files into config file
     cat <(echo -e '<ca>') \
-        client/ca.crt <(echo -e '</ca>\n<cert>') \
-        client/client.crt <(echo -e '</cert>\n<key>') \
-        client/client.key <(echo -e '</key>\n<tls-auth>') \
-        client/ta.key <(echo -e '</tls-auth>') \
-        >> client/client.ovpn
+        "$INTERMEDIATE_DIR/ca.crt" <(echo -e '</ca>\n<cert>') \
+        "$INTERMEDIATE_DIR/$CLIENT_FILENAME.crt" <(echo -e '</cert>\n<key>') \
+        "$INTERMEDIATE_DIR/$CLIENT_FILENAME.key" <(echo -e '</key>\n<tls-auth>') \
+        "$INTERMEDIATE_DIR/ta.key" <(echo -e '</tls-auth>') \
+        >> "$INTERMEDIATE_DIR/client.ovpn"
+    
+    cp "$INTERMEDIATE_DIR/client.ovpn" "clients/$CLIENT_FILENAME.ovpn"
 
-    echo "$(datef) Client.ovpn file has been generated"
-}
+    # Available static ips (pair client-server)
+    # [  1,  2] [  5,  6] [  9, 10] [ 13, 14] [ 17, 18]
+    # [ 21, 22] [ 25, 26] [ 29, 30] [ 33, 34] [ 37, 38]
+    # [ 41, 42] [ 45, 46] [ 49, 50] [ 53, 54] [ 57, 58]
+    # [ 61, 62] [ 65, 66] [ 69, 70] [ 73, 74] [ 77, 78]
+    # [ 81, 82] [ 85, 86] [ 89, 90] [ 93, 94] [ 97, 98]
+    # [101,102] [105,106] [109,110] [113,114] [117,118]
+    # [121,122] [125,126] [129,130] [133,134] [137,138]
+    # [141,142] [145,146] [149,150] [153,154] [157,158]
+    # [161,162] [165,166] [169,170] [173,174] [177,178]
+    # [181,182] [185,186] [189,190] [193,194] [197,198]
+    # [201,202] [205,206] [209,210] [213,214] [217,218]
+    # [221,222] [225,226] [229,230] [233,234] [237,238]
+    # [241,242] [245,246] [249,250] [253,254]
+    if [ ! -z "$STATIC_CLIENT_IP" -a ! -z "$STATIC_SERVER_IP" ]
+    then
+        echo -e "ifconfig-push $STATIC_CLIENT_IP $STATIC_SERVER_IP" > "/etc/openvpn/ccd/$CLIENT_FILENAME"
+    fi
 
-function zipFiles() {
-    # -q to silence zip output
-    zip -q client.zip client/client.ovpn
-    cp client.zip client
-
-    echo "$(datef) Client.zip file has been generated"
-}
-
-function zipFilesWithPassword() {
-    # -q to silence zip output
-    zip -q -P "$1" client.zip client/client.ovpn
-    cp client.zip client
-
-    echo "$(datef) Client.zip with password protection has been generated"
+    echo "$(datef) $CLIENT_FILENAME.ovpn file has been generated (see folder $APP_INSTALL_PATH/clients)"
 }
