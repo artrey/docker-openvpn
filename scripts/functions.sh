@@ -6,7 +6,7 @@ function datef() {
     date "+%a %b %-d %T %Y"
 }
 
-function createConfig() {
+function createClient() {
     cd $APP_INSTALL_PATH
 
     CLIENT_FILENAME="${CLIENT_FILENAME:-client}"
@@ -17,7 +17,7 @@ function createConfig() {
     # Client sertificate /usr/share/easy-rsa/pki/issued/client.crt
     # CA is by the path /usr/share/easy-rsa/pki/ca.crt
 
-    INTERMEDIATE_DIR="clients/inter/$CLIENT_FILENAME"
+    INTERMEDIATE_DIR="clients/$CLIENT_FILENAME"
     # Create mkdir if doesn't exist
     mkdir -p "$INTERMEDIATE_DIR"
 
@@ -41,7 +41,7 @@ function createConfig() {
         "$INTERMEDIATE_DIR/ta.key" <(echo -e '</tls-auth>') \
         >> "$INTERMEDIATE_DIR/client.ovpn"
     
-    cp "$INTERMEDIATE_DIR/client.ovpn" "clients/$CLIENT_FILENAME.ovpn"
+    cp "$INTERMEDIATE_DIR/client.ovpn" "/etc/openvpn/clients/$CLIENT_FILENAME.ovpn"
 
     # Available static ips (pair client-server)
     # [  1,  2] [  5,  6] [  9, 10] [ 13, 14] [ 17, 18]
@@ -62,5 +62,43 @@ function createConfig() {
         echo -e "ifconfig-push $STATIC_CLIENT_IP $STATIC_SERVER_IP" > "/etc/openvpn/ccd/$CLIENT_FILENAME"
     fi
 
-    echo "$(datef) $CLIENT_FILENAME.ovpn file has been generated (see folder $APP_INSTALL_PATH/clients)"
+    echo "$(datef) $CLIENT_FILENAME.ovpn file has been generated (see folder /etc/openvpn/clients)"
+}
+
+function generateServerParameters() {
+    /usr/share/easy-rsa/easyrsa init-pki
+    
+    /usr/share/easy-rsa/easyrsa gen-dh
+    # DH parameters of size 2048 created at /usr/share/easy-rsa/pki/dh.pem
+    # Copy DH file
+    cp pki/dh.pem /etc/openvpn
+
+    /usr/share/easy-rsa/easyrsa build-ca nopass << EOF
+
+EOF
+    # CA creation complete and you may now import and sign cert requests.
+    # Your new CA certificate file for publishing is at:
+    # /usr/share/easy-rsa/pki/ca.crt
+
+    /usr/share/easy-rsa/easyrsa gen-req MyReq nopass << EOF2
+
+EOF2
+    # Keypair and certificate request completed. Your files are:
+    # req: /usr/share/easy-rsa/pki/reqs/MyReq.req
+    # key: /usr/share/easy-rsa/pki/private/MyReq.key
+
+    /usr/share/easy-rsa/easyrsa sign-req server MyReq << EOF3
+yes
+EOF3
+    # Certificate created at: /usr/share/easy-rsa/pki/issued/MyReq.crt
+
+    openvpn --genkey --secret /etc/openvpn/ta.key << EOF4
+yes
+EOF4
+
+    # Print app version
+    echo "$(datef) Server $APP_NAME configured"
+
+    # Copy server keys and certificates
+    cp pki/ca.crt pki/issued/MyReq.crt pki/private/MyReq.key /etc/openvpn
 }

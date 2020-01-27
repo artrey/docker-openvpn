@@ -1,0 +1,16 @@
+version: '3'
+
+services:
+  ovpn:
+    image: artrey/openvpn:test
+    restart: unless-stopped
+    volumes:
+      - ./ovpn-data/:/etc/openvpn/
+      - ./socat-mapping.sh:/socat-mapping.sh
+    cap_add:
+      - NET_ADMIN
+    ports:
+      - 1194:1194/udp
+    environment:
+      HOST_ADDR: localhost
+      HOST_PORT: 1194

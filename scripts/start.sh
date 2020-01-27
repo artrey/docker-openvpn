@@ -2,8 +2,13 @@
 
 source ./functions.sh
 
+if [[ "$1" -eq "gen-server" ]]; then
+    generateServerParameters
+    exit 0
+fi
+
 if [[ "$1" -eq "gen-client" ]]; then
-    createConfig
+    createClient
     exit 0
 fi
 
@@ -19,45 +24,15 @@ iptables -A INPUT -i eth0 -p udp -m state --state NEW,ESTABLISHED --dport 1194 -
 iptables -A OUTPUT -o eth0 -p udp -m state --state ESTABLISHED --sport 1194 -j ACCEPT
 
 # Allow traffic on the TUN interface.
-iptables -A INPUT -i tun0 -j ACCEPT
-iptables -A FORWARD -i tun0 -j ACCEPT
-iptables -A OUTPUT -o tun0 -j ACCEPT
-
-# Allow forwarding traffic only from the VPN.
+iptables -A FORWARD -m state --state RELATED,ESTABLISHED -j ACCEPT
 iptables -A FORWARD -i tun0 -o eth0 -s 10.8.0.0/24 -j ACCEPT
-iptables -A FORWARD -m state --state ESTABLISHED,RELATED -j ACCEPT
+iptables -A FORWARD -i eth0 -o tun0 -s 172.17.0.0/16 -j ACCEPT
+iptables -A OUTPUT -o tun0 -j ACCEPT
+iptables -A INPUT -i tun0 -j ACCEPT
 
 iptables -t nat -A POSTROUTING -s 10.8.0.0/24 -o eth0 -j MASQUERADE
 
-
-/usr/share/easy-rsa/easyrsa build-ca nopass << EOF
-
-EOF
-# CA creation complete and you may now import and sign cert requests.
-# Your new CA certificate file for publishing is at:
-# /usr/share/easy-rsa/pki/ca.crt
-
-/usr/share/easy-rsa/easyrsa gen-req MyReq nopass << EOF2
-
-EOF2
-# Keypair and certificate request completed. Your files are:
-# req: /usr/share/easy-rsa/pki/reqs/MyReq.req
-# key: /usr/share/easy-rsa/pki/private/MyReq.key
-
-/usr/share/easy-rsa/easyrsa sign-req server MyReq << EOF3
-yes
-EOF3
-# Certificate created at: /usr/share/easy-rsa/pki/issued/MyReq.crt
-
-openvpn --genkey --secret /etc/openvpn/ta.key << EOF4
-yes
-EOF4
-
-# Print app version
-echo "$(datef) $APP_NAME $APP_VERSION"
-
-# Copy server keys and certificates
-cp pki/ca.crt pki/issued/MyReq.crt pki/private/MyReq.key /etc/openvpn
+chmod +x /socat-mapping.sh && /socat-mapping.sh
 
 # Need to feed key password
 openvpn --config /etc/openvpn/server.conf

@@ -1,4 +1,5 @@
 bin/
+ovpn-data/
 done.txt
 client/
 build_number.txt
