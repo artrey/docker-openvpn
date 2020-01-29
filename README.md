@@ -72,3 +72,26 @@ Congratulations, now you're all set and can safely browse the internet.
 [Contrubition Guidelines](https://github.com/alekslitvinenk/docker-openvpn/blob/master/CONTRIBUTING.md)<br>
 [Code Of Conduct](https://github.com/alekslitvinenk/docker-openvpn/blob/master/CODE_OF_CONDUCT.md)<br>
 [License Agreement](https://github.com/alekslitvinenk/docker-openvpn/blob/master/LICENSE)
+
+```bash
+# create data folder
+mkdir ovpn-data
+
+# generate server credentioals
+docker run --rm -it \
+	-v $PWD/ovpn-data/:/etc/openvpn/ \
+	artrey/openvpn:test gen-server
+
+# generate client credentials
+docker run --rm -it \
+	-v $PWD/ovpn-data/:/etc/openvpn/ \
+	-e HOST_ADDR=$(curl -s https://api.ipify.org) \
+	-e HOST_PORT=1194 \
+	-e CLIENT_FILENAME=client \
+	-e STATIC_CLIENT_IP=10.8.0.5 \
+	-e STATIC_SERVER_IP=10.8.0.6 \
+	artrey/openvpn:test gen-client
+
+# start OpenVPN (don't forget update socat-mapping.sh)
+docker-compose up -d
+```

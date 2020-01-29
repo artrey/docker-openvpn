@@ -10,11 +10,8 @@ WORKDIR ${APP_INSTALL_PATH}
 COPY scripts .
 COPY config ./config
 
-RUN apk add --no-cache openvpn easy-rsa bash dumb-init socat && \
-	# socat is utility for port mapping (iptables not working correctly in docker)
-	cp config/server.conf /etc/openvpn/server.conf && \
-    mkdir -p /etc/openvpn/ccd && \
-    mkdir -p /etc/openvpn/clients
+RUN apk add --no-cache openvpn easy-rsa bash dumb-init socat
+# socat is utility for port mapping (iptables not working correctly in docker)
 
 EXPOSE 1194/udp
 

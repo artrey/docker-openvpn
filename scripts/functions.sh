@@ -6,6 +6,10 @@ function datef() {
     date "+%a %b %-d %T %Y"
 }
 
+function output() {
+    >&2 echo "$(datef) - $1"
+}
+
 function createClient() {
     cd $APP_INSTALL_PATH
 
@@ -62,7 +66,7 @@ function createClient() {
         echo -e "ifconfig-push $STATIC_CLIENT_IP $STATIC_SERVER_IP" > "/etc/openvpn/ccd/$CLIENT_FILENAME"
     fi
 
-    echo "$(datef) $CLIENT_FILENAME.ovpn file has been generated (see folder /etc/openvpn/clients)"
+    output "$CLIENT_FILENAME.ovpn file has been generated (see folder /etc/openvpn/clients)"
 }
 
 function generateServerParameters() {
@@ -97,7 +101,7 @@ yes
 EOF4
 
     # Print app version
-    echo "$(datef) Server $APP_NAME configured"
+    output "Server $APP_NAME configured"
 
     # Copy server keys and certificates
     cp pki/ca.crt pki/issued/MyReq.crt pki/private/MyReq.key /etc/openvpn

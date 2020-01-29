@@ -11,6 +11,3 @@ services:
       - NET_ADMIN
     ports:
       - 1194:1194/udp
-    environment:
-      HOST_ADDR: localhost
-      HOST_PORT: 1194
