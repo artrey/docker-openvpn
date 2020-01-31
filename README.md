@@ -1,97 +1,113 @@
 <p align=center><img src="https://alekslitvinenk.github.io/docker-openvpn/assets/img/logo-s.png"></p><br>
 
-<p align="center">
-<a href="https://github.com/alekslitvinenk/docker-openvpn/blob/master/README.md">[English]</a>
-<a href="https://github.com/alekslitvinenk/docker-openvpn/blob/master/docs/README_RU.md">[Русский]</a>
-<br>
-
-![Build Status](http://cicd.dockovpn.io/build/docker-openvpn)
-![Build Time](http://cicd.dockovpn.io/built/docker-openvpn)
-[![Docker Pulls](https://img.shields.io/docker/pulls/alekslitvinenk/openvpn.svg)](https://hub.docker.com/r/alekslitvinenk/openvpn/)
-[![Gitter chat](https://img.shields.io/badge/chat-on_gitter-50b6bb.svg)](https://gitter.im/docker-openvpn/community)
-![GitHub](https://img.shields.io/github/license/alekslitvinenk/docker-openvpn)
+[![Docker Pulls](https://img.shields.io/docker/pulls/artrey/openvpn.svg)](https://hub.docker.com/r/artrey/openvpn/)
+![GitHub](https://img.shields.io/github/license/artrey/docker-openvpn)
 
 # 🔐Docker-OpenVPN
-Out of the box stateless openvpn server docker image which starts in just a few seconds and doesn't require presistent storage.
 
 ## GitHub Repo:
-https://github.com/alekslitvinenk/docker-openvpn
+
+https://github.com/artrey/docker-openvpn
 
 ## DockerHub Repo:
-https://hub.docker.com/r/alekslitvinenk/openvpn
 
-### Docker Tags
-| Tag    | Description | 
-| :----: | :---------: |
-| `latest` | This tag is added to every newly built version be that `v#.#.#` or `v#.#.#-regen-dh` |
-| `v#.#.#` | Standard fixed release version, where {1} is _major version_, {2} - _minor_ and {3} is a _patch_. For instance, `v1.1.0` |
-| `v#.#.#-regen-dh` | Release version with newly generated Deffie Hellman security file. In order to keep security high this version is generated every hour. Tag example - `v1.1.0-regen-dh` |
-| `dev` | Development build which contains the most recent changes from the active development branch (master) |
-
-# Video Guide 📹
-<p align=center><a href="https://youtu.be/y5Dwakc6hMs"><img src="https://alekslitvinenk.github.io/docker-openvpn/assets/img/video-cover-play.png"></a></p><br>
+https://hub.docker.com/r/artrey/openvpn
 
 # Quick Start 🚀
 
 ### Prerequisites:
+
 1. Any hardware or vps server running Linux. You should have administrative rights on this machine.
 2. Docker installation on your server.
 3. Public ip address assigned to your server.
 
-## 1. Run docker-openvpn
-Copy & paste the following command to run docker-openvpn:<br>
-```bash
-docker run --cap-add=NET_ADMIN \
--p 1194:1194/udp -p 80:8080/tcp \
--e HOST_ADDR=$(curl -s https://api.ipify.org) \
-alekslitvinenk/openvpn
-```
-
-If everything went well, you should be able to see the following output in your console:
-```
-Sun Jun  9 08:56:11 2019 Initialization Sequence Completed
-Sun Jun  9 08:56:12 2019 Client.ovpn file has been generated
-Sun Jun  9 08:56:12 2019 Config server started, download your client.ovpn config at http://example.com:8080/
-Sun Jun  9 08:56:12 2019 NOTE: After you download you client config, http server will be shut down!
- ```
-## 2. Get client configuration
-Now, when your docker-openvpn is up and running you can go to `<your_host_public_ip>:8080` on your device and download ovpn client configuration.
-As soon as you have your config file downloaded, you will see the following output in the console:<br>
-```
-Sun Jun  9 09:01:15 2019 Config http server has been shut down
-```
-Import `client.ovpn` into your favourite openvpn client. In most cases it should be enough to just doubleclick or tap on that file.
-
-
-## 3. Connect to your docker-openvpn container
-You should be able to see your newly added client configuration in the list of available configurations. Click on it, connection process should initiate and be established withing few seconds.
-
-Congratulations, now you're all set and can safely browse the internet.
-
-# Other resources
-[Contrubition Guidelines](https://github.com/alekslitvinenk/docker-openvpn/blob/master/CONTRIBUTING.md)<br>
-[Code Of Conduct](https://github.com/alekslitvinenk/docker-openvpn/blob/master/CODE_OF_CONDUCT.md)<br>
-[License Agreement](https://github.com/alekslitvinenk/docker-openvpn/blob/master/LICENSE)
+## 1. Prepare docker-openvpn server
 
 ```bash
 # create data folder
 mkdir ovpn-data
 
-# generate server credentioals
+# generate server credentials
 docker run --rm -it \
 	-v $PWD/ovpn-data/:/etc/openvpn/ \
 	artrey/openvpn:test gen-server
+```
 
+## 2. Generate client credentials
+
+Environment variables:
+
+- `HOST_ADDR` - addres of your vpn server
+- `HOST_PORT` - port for client (server works on port 1194). It useful for mapping ports (see step 3).
+- `CLIENT_FILENAME` - unique name of client
+- `STATIC_CLIENT_IP` (optional) - reserve the ip for this client (10.8.0.x)
+- `STATIC_SERVER_IP` (optional) - reserve the server side ip for this client (10.8.0.x)
+
+Valid map of static ips:
+
+```bash
+    # Available static ips (pair client-server)
+    # [  1,  2] [  5,  6] [  9, 10] [ 13, 14] [ 17, 18]
+    # [ 21, 22] [ 25, 26] [ 29, 30] [ 33, 34] [ 37, 38]
+    # [ 41, 42] [ 45, 46] [ 49, 50] [ 53, 54] [ 57, 58]
+    # [ 61, 62] [ 65, 66] [ 69, 70] [ 73, 74] [ 77, 78]
+    # [ 81, 82] [ 85, 86] [ 89, 90] [ 93, 94] [ 97, 98]
+    # [101,102] [105,106] [109,110] [113,114] [117,118]
+    # [121,122] [125,126] [129,130] [133,134] [137,138]
+    # [141,142] [145,146] [149,150] [153,154] [157,158]
+    # [161,162] [165,166] [169,170] [173,174] [177,178]
+    # [181,182] [185,186] [189,190] [193,194] [197,198]
+    # [201,202] [205,206] [209,210] [213,214] [217,218]
+    # [221,222] [225,226] [229,230] [233,234] [237,238]
+    # [241,242] [245,246] [249,250] [253,254]
+```
+
+Example of command:
+
+```bash
 # generate client credentials
 docker run --rm -it \
 	-v $PWD/ovpn-data/:/etc/openvpn/ \
 	-e HOST_ADDR=$(curl -s https://api.ipify.org) \
-	-e HOST_PORT=1194 \
+	-e HOST_PORT=45045 \
 	-e CLIENT_FILENAME=client \
 	-e STATIC_CLIENT_IP=10.8.0.5 \
 	-e STATIC_SERVER_IP=10.8.0.6 \
 	artrey/openvpn:test gen-client
+```
 
-# start OpenVPN (don't forget update socat-mapping.sh)
+## 3. Configure ports and start
+
+Example of `docker-compose.yml`:
+
+```yml
+version: "3"
+
+services:
+  ovpn:
+    image: artrey/openvpn:latest
+    restart: unless-stopped
+    volumes:
+      - ./ovpn-data/:/etc/openvpn/
+      - ./socat-mapping.sh:/socat-mapping.sh
+    cap_add:
+      - NET_ADMIN
+    ports:
+      - 45045:1194/udp
+      - 9000:9000
+      - etc.
+```
+
+Example of `socat-mapping.sh` (optional):
+
+```bash
+socat TCP-LISTEN:9000,reuseaddr,fork TCP:10.8.0.5:9000 &
+```
+
+Start OpenVPN
+
+```bash
 docker-compose up -d
 ```
+
+# [License Agreement](https://github.com/artrey/docker-openvpn/blob/master/LICENSE)
