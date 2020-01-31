@@ -15,6 +15,8 @@ function createClient() {
 
     CLIENT_FILENAME="${CLIENT_FILENAME:-client}"
 
+    cp -r /etc/openvpn/pki.bak/ pki/
+
     # Redirect stderr to the black hole
     /usr/share/easy-rsa/easyrsa build-client-full "$CLIENT_FILENAME" nopass &> /dev/null
     # Writing new private key to '/usr/share/easy-rsa/pki/private/client.key
@@ -105,4 +107,7 @@ EOF4
 
     # Copy server keys and certificates
     cp pki/ca.crt pki/issued/MyReq.crt pki/private/MyReq.key /etc/openvpn
+
+    # Copy backup of pki
+    cp -r pki/ /etc/openvpn/pki.bak/
 }
