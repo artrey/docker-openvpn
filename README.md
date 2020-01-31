@@ -30,7 +30,7 @@ mkdir ovpn-data
 # generate server credentials
 docker run --rm -it \
 	-v $PWD/ovpn-data/:/etc/openvpn/ \
-	artrey/openvpn:test gen-server
+	artrey/openvpn:latest gen-server
 ```
 
 ## 2. Generate client credentials
@@ -73,7 +73,7 @@ docker run --rm -it \
 	-e CLIENT_FILENAME=client \
 	-e STATIC_CLIENT_IP=10.8.0.5 \
 	-e STATIC_SERVER_IP=10.8.0.6 \
-	artrey/openvpn:test gen-client
+	artrey/openvpn:latest gen-client
 ```
 
 ## 3. Configure ports and start
